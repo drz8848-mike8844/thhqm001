@@ -1,0 +1,18 @@
+# 敏感配置
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+
+# Django
+db.sqlite3
+media/*
+!/media/.gitkeep
+staticfiles/
+
+# IDE
+.vscode/
+.idea/
