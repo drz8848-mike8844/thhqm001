@@ -37,7 +37,7 @@
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/drz8848/my_web_001.git
+git clone https://gitcode.com/drz8848-dev/my_thhqm_001.git
 cd my_web_001
 ```
 
