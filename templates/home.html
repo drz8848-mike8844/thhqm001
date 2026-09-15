@@ -1,11 +1,67 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="p-5 mb-4 bg-light rounded-3 text-center">
-    <div class="container-fluid py-5">
-        <h1 class="display-5 fw-bold">欢迎来到东方幻绮梦</h1>
-        <p class="col-md-8 fs-4 mx-auto">快来分享你的东方优秀作品年度推荐吧！</p>
-        <a class="btn btn-primary btn-lg" href="{% url 'post_list' %}" role="button">浏览帖子</a>
+<div class="p-5 mb-4 rounded-4 text-center text-white" style="background:var(--brand-grad);">
+    <h1 class="display-4 fw-bold mb-3"><i class="bi bi-stars"></i> 欢迎来到东方幻绮梦</h1>
+    <p class="lead mb-4">分享你的东方优秀作品 · 年度推荐 · 交流创作灵感</p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a class="btn btn-light btn-lg px-4" href="{% url 'post_list' %}"><i class="bi bi-chat-square-text"></i> 浏览帖子</a>
+        {% if user.is_authenticated %}
+        <a class="btn btn-outline-light btn-lg px-4" href="{% url 'post_create' %}"><i class="bi bi-pencil-square"></i> 发布新帖</a>
+        {% else %}
+        <a class="btn btn-outline-light btn-lg px-4" href="{% url 'register' %}">立即加入</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="card stat-card"><i class="bi bi-file-earmark-text display-6 text-primary"></i><div class="h3 mt-2">{{ stats.posts }}</div><div class="text-muted">帖子</div></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card"><i class="bi bi-people display-6 text-success"></i><div class="h3 mt-2">{{ stats.users }}</div><div class="text-muted">用户</div></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card"><i class="bi bi-chat-dots display-6 text-warning"></i><div class="h3 mt-2">{{ stats.comments }}</div><div class="text-muted">评论</div></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card"><i class="bi bi-tags display-6 text-danger"></i><div class="h3 mt-2">{{ stats.tags }}</div><div class="text-muted">标签</div></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="bi bi-clock-history text-primary"></i> 最新帖子</h4>
+                <a href="{% url 'post_list' %}" class="btn btn-sm btn-outline-primary">查看全部</a>
+            </div>
+            {% for post in latest_posts %}
+            <div class="d-flex gap-3 py-2 border-bottom">
+                <span class="avatar avatar-sm avatar-grad">{{ post.author.profile.get_avatar_initial }}</span>
+                <div class="flex-grow-1">
+                    <a href="{% url 'post_detail' post.id %}" class="text-decoration-none fw-semibold">{{ post.title }}</a>
+                    <div class="small text-muted">{{ post.author.profile.get_display_name }} · {{ post.created_at|date:"m-d H:i" }} · ❤️{{ post.likes_count }} 💬{{ post.comments_count }} 👁{{ post.views_count }}</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">暂无帖子，快来发布第一篇吧！</div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-4 mb-4">
+            <h5 class="mb-3"><i class="bi bi-fire text-danger"></i> 热门排行</h5>
+            {% for post in hot_posts %}
+            <div class="d-flex align-items-center gap-2 py-1">
+                <span class="badge {% if forloop.counter <= 3 %}bg-danger{% else %}bg-secondary{% endif %}">{{ forloop.counter }}</span>
+                <a href="{% url 'post_detail' post.id %}" class="text-decoration-none text-truncate" style="max-width:200px">{{ post.title }}</a>
+            </div>
+            {% empty %}
+            <div class="text-muted small">暂无数据</div>
+            {% endfor %}
+        </div>
+        <div class="card p-4">
+            <h5 class="mb-3"><i class="bi bi-tags text-primary"></i> 热门标签</h5>
+            <div class="d-flex flex-wrap gap-2">
+                {% for tag in tags %}
+                <a href="{% url 'posts_by_tag' tag.name %}" class="tag-pill">{{ tag.name }} <span class="text-muted">·{{ tag.post_count }}</span></a>
+                {% empty %}
+                <span class="text-muted small">暂无标签</span>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
-

@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title }} · 东方幻绮梦{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex gap-2 align-items-center">
+                    {% if post.is_pinned %}<span class="badge bg-warning text-dark"><i class="bi bi-pin-angle-fill"></i> 置顶</span>{% endif %}
+                    {% if post.is_essence %}<span class="badge bg-success"><i class="bi bi-star-fill"></i> 精华</span>{% endif %}
+                    <h3 class="mb-0">{{ post.title }}</h3>
+                </div>
+                <a href="{% url 'post_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+            </div>
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="avatar avatar-grad">{{ post.author.profile.get_avatar_initial }}</span>
+                <div>
+                    <a href="{% url 'user_home' post.author.username %}" class="text-decoration-none fw-semibold">{{ post.author.profile.get_display_name }}</a>
+                    <span class="level-badge bg-{{ post.author.profile.get_level_info.color }}">{{ post.author.profile.get_level_info.name }}</span>
+                    <div class="text-muted small">{{ post.created_at|date:"Y-m-d H:i" }} · <i class="bi bi-eye"></i> {{ post.views_count }} 浏览</div>
+                </div>
+                <div class="ms-auto">
+                    {% if user.is_authenticated and user != post.author %}
+                    <button class="btn btn-sm {% if is_following %}btn-outline-secondary{% else %}btn-outline-primary{% endif %} follow-btn" data-user="{{ post.author.username }}">
+                        <i class="bi bi-person-plus"></i> <span>{% if is_following %}已关注{% else %}关注{% endif %}</span>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="rich-content mb-3" data-md="{{ post.content|escapejs }}">{{ post.content|linebreaks }}</div>
+            {% if post.image %}<img src="{{ post.image.url }}" class="img-fluid rounded mb-3">{% endif %}
+            {% if post.link %}<a href="{{ post.link }}" target="_blank" class="btn btn-sm btn-outline-info mb-3"><i class="bi bi-link-45deg"></i> 查看链接</a>{% endif %}
+            {% if post.tags.all %}
+            <div class="d-flex flex-wrap gap-1 mb-3">{% for tag in post.tags.all %}<a href="{% url 'posts_by_tag' tag.name %}" class="tag-pill">{{ tag.name }}</a>{% endfor %}</div>
+            {% endif %}
+
+            <div class="d-flex gap-2 flex-wrap border-top pt-3">
+                {% if user.is_authenticated %}
+                <button class="btn btn-sm {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %} like-btn" data-id="{{ post.id }}"><i class="bi bi-heart{% if user_liked %}-fill{% endif %}"></i> 点赞 <span class="like-count-{{ post.id }}">{{ post.likes_count }}</span></button>
+                <button class="btn btn-sm {% if user_favorited %}btn-warning{% else %}btn-outline-warning{% endif %} fav-btn" data-id="{{ post.id }}"><i class="bi bi-bookmark{% if user_favorited %}-fill{% endif %}"></i> 收藏 <span class="fav-count-{{ post.id }}">{{ post.favorites_count }}</span></button>
+                <a href="{% url 'share_post' post.id %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-share"></i> 转发 {{ post.shares_count }}</a>
+                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#reportModal"><i class="bi bi-flag"></i> 举报</button>
+                {% else %}
+                <span class="btn btn-sm btn-outline-danger disabled">❤️ {{ post.likes_count }}</span>
+                <span class="btn btn-sm btn-outline-warning disabled">⭐ {{ post.favorites_count }}</span>
+                {% endif %}
+                {% if user == post.author or is_staff %}
+                <form method="post" action="{% url 'post_delete' post.id %}" class="d-inline" onsubmit="return confirm('确定删除？');">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 删除</button></form>
+                {% endif %}
+                {% if is_staff %}
+                <a href="{% url 'toggle_pin' post.id %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pin-angle"></i> {% if post.is_pinned %}取消置顶{% else %}置顶{% endif %}</a>
+                <a href="{% url 'toggle_essence' post.id %}" class="btn btn-sm btn-outline-success"><i class="bi bi-star"></i> {% if post.is_essence %}取消精华{% else %}精华{% endif %}</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card p-4 mb-4" id="comments">
+            <h5 class="mb-3"><i class="bi bi-chat-dots text-primary"></i> 评论 ({{ post.comments_count }})</h5>
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'add_comment' post.id %}" class="mb-4">
+                {% csrf_token %}
+                <input type="hidden" name="parent_id" id="parentId" value="">
+                <textarea name="content" class="form-control mb-2" rows="3" placeholder="写下你的评论... (支持 Markdown 和 @提及)" id="commentBox"></textarea>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted small" id="replyHint"></span>
+                    <button class="btn btn-brand btn-sm" type="submit"><i class="bi bi-send"></i> 发表</button>
+                </div>
+            </form>
+            {% else %}
+            <div class="alert alert-info"><a href="{% url 'login' %}">登录</a> 后参与评论</div>
+            {% endif %}
+
+            {% for comment, replies in comments_with_replies %}
+            <div class="border-bottom py-3">
+                <div class="d-flex gap-2">
+                    <span class="avatar avatar-sm avatar-grad">{{ comment.author.profile.get_avatar_initial }}</span>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{% url 'user_home' comment.author.username %}" class="fw-semibold text-decoration-none">{{ comment.author.profile.get_display_name }}</a>
+                            <span class="level-badge bg-{{ comment.author.profile.get_level_info.color }}">{{ comment.author.profile.get_level_info.name }}</span>
+                            <span class="text-muted small">{{ comment.created_at|date:"m-d H:i" }}</span>
+                        </div>
+                        <div class="rich-content mt-1" data-md="{{ comment.content|escapejs }}">{{ comment.content|linebreaks }}</div>
+                        <div class="d-flex gap-3 mt-1 small">
+                            <span class="action-btn clike-btn {% if comment.id in liked_comment_ids %}text-danger{% endif %}" data-id="{{ comment.id }}"><i class="bi bi-heart{% if comment.id in liked_comment_ids %}-fill{% endif %}"></i> <span class="clike-count-{{ comment.id }}">{{ comment.likes_count }}</span></span>
+                            {% if user.is_authenticated %}<a href="javascript:void(0)" class="text-muted text-decoration-none reply-btn" data-id="{{ comment.id }}" data-name="{{ comment.author.profile.get_display_name }}"><i class="bi bi-reply"></i> 回复</a>{% endif %}
+                            {% if user == comment.author or is_staff %}<form method="post" action="{% url 'delete_comment' comment.id %}" class="d-inline" onsubmit="return confirm('删除评论？');">{% csrf_token %}<button class="btn btn-link btn-sm text-danger p-0"><i class="bi bi-trash"></i></button></form>{% endif %}
+                        </div>
+                        {% for reply in replies %}
+                        <div class="mt-3 ps-3 border-start">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="avatar avatar-sm avatar-grad">{{ reply.author.profile.get_avatar_initial }}</span>
+                                <a href="{% url 'user_home' reply.author.username %}" class="fw-semibold text-decoration-none">{{ reply.author.profile.get_display_name }}</a>
+                                <span class="level-badge bg-{{ reply.author.profile.get_level_info.color }}">{{ reply.author.profile.get_level_info.name }}</span>
+                                <span class="text-muted small">{{ reply.created_at|date:"m-d H:i" }}</span>
+                            </div>
+                            <div class="rich-content mt-1" data-md="{{ reply.content|escapejs }}">{{ reply.content|linebreaks }}</div>
+                            <div class="d-flex gap-3 mt-1 small">
+                                <span class="action-btn clike-btn {% if reply.id in liked_comment_ids %}text-danger{% endif %}" data-id="{{ reply.id }}"><i class="bi bi-heart{% if reply.id in liked_comment_ids %}-fill{% endif %}"></i> <span class="clike-count-{{ reply.id }}">{{ reply.likes_count }}</span></span>
+                                {% if user.is_authenticated %}<a href="javascript:void(0)" class="text-muted text-decoration-none reply-btn" data-id="{{ comment.id }}" data-name="{{ reply.author.profile.get_display_name }}"><i class="bi bi-reply"></i> 回复</a>{% endif %}
+                                {% if user == reply.author or is_staff %}<form method="post" action="{% url 'delete_comment' reply.id %}" class="d-inline" onsubmit="return confirm('删除回复？');">{% csrf_token %}<button class="btn btn-link btn-sm text-danger p-0"><i class="bi bi-trash"></i></button></form>{% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state"><i class="bi bi-chat-square display-4"></i><p class="mt-3">还没有评论，快来抢沙发！</p></div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card p-4">
+            <h5 class="mb-3"><i class="bi bi-info-circle text-primary"></i> 帖子信息</h5>
+            <ul class="list-unstyled small mb-0">
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">作者</span><a href="{% url 'user_home' post.author.username %}">{{ post.author.profile.get_display_name }}</a></li>
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">发布时间</span>{{ post.created_at|date:"Y-m-d H:i" }}</li>
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">浏览量</span>{{ post.views_count }}</li>
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">点赞数</span>{{ post.likes_count }}</li>
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">收藏数</span>{{ post.favorites_count }}</li>
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">评论数</span>{{ post.comments_count }}</li>
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">转发数</span>{{ post.shares_count }}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'report_post' post.id %}">{% csrf_token %}
+            <div class="modal-header"><h5 class="modal-title">举报帖子</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <select name="reason" class="form-select mb-3">
+                    <option value="spam">垃圾广告</option>
+                    <option value="abuse">辱骂攻击</option>
+                    <option value="porn">色情低俗</option>
+                    <option value="political">政治敏感</option>
+                    <option value="other">其他</option>
+                </select>
+                <textarea name="description" class="form-control" rows="3" placeholder="补充说明（选填）"></textarea>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button><button type="submit" class="btn btn-danger">提交举报</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function(){
+    $('.like-btn').click(function(){
+        var id=$(this).data('id');
+        $.post("/posts/"+id+"/like/", {csrfmiddlewaretoken:'{{ csrf_token }}'}, function(d){
+            $('.like-count-'+id).text(d.count);
+            $('.like-btn[data-id="'+id+'"]').toggleClass('btn-danger', d.liked).toggleClass('btn-outline-danger', !d.liked).find('i').toggleClass('bi-heart-fill', d.liked).toggleClass('bi-heart', !d.liked);
+        });
+    });
+    $('.fav-btn').click(function(){
+        var id=$(this).data('id');
+        $.post("/posts/"+id+"/favorite/", {csrfmiddlewaretoken:'{{ csrf_token }}'}, function(d){
+            $('.fav-count-'+id).text(d.count);
+            $('.fav-btn[data-id="'+id+'"]').toggleClass('btn-warning', d.favorited).toggleClass('btn-outline-warning', !d.favorited).find('i').toggleClass('bi-bookmark-fill', d.favorited).toggleClass('bi-bookmark', !d.favorited);
+        });
+    });
+    $('.clike-btn').click(function(){
+        var id=$(this).data('id');
+        $.post("/posts/comment/"+id+"/like/", {csrfmiddlewaretoken:'{{ csrf_token }}'}, function(d){
+            $('.clike-count-'+id).text(d.count);
+            $('.clike-btn[data-id="'+id+'"]').toggleClass('text-danger', d.liked).find('i').toggleClass('bi-heart-fill', d.liked).toggleClass('bi-heart', !d.liked);
+        });
+    });
+    $('.reply-btn').click(function(){
+        $('#parentId').val($(this).data('id'));
+        $('#replyHint').html('回复 @'+$(this).data('name')+' <a href="javascript:void(0)" id="cancelReply">取消</a>');
+        $('#commentBox').focus();
+    });
+    $(document).on('click','#cancelReply',function(){ $('#parentId').val(''); $('#replyHint').html(''); });
+    $('.follow-btn').click(function(){
+        var btn=$(this), u=btn.data('user'), following=btn.find('span').text().trim()==='已关注';
+        $.post(following?"/accounts/unfollow/"+u+"/":"/accounts/follow/"+u+"/", {csrfmiddlewaretoken:'{{ csrf_token }}'}, function(d){
+            btn.find('span').text(d.following?'已关注':'关注');
+            btn.toggleClass('btn-outline-primary', !d.following).toggleClass('btn-outline-secondary', d.following);
+        });
+    });
+});
+</script>
+{% endblock %}

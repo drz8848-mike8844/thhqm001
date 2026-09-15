@@ -1,15 +1,26 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
+{% block title %}注册 · 东方幻绮梦{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <h2>注册新账号</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <button class="btn btn-success w-100" type="submit">注册</button>
-        </form>
+    <div class="col-md-7">
+        <div class="card p-4 mt-4">
+            <h3 class="text-center mb-4"><i class="bi bi-person-plus text-primary"></i> 注册新账号</h3>
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">用户名</label><input type="text" name="username" class="form-control" required></div>
+                    <div class="col-md-6"><label class="form-label">昵称</label><input type="text" name="nickname" class="form-control"></div>
+                    <div class="col-md-6"><label class="form-label">邮箱</label><input type="email" name="email" class="form-control" required></div>
+                    <div class="col-md-6"><label class="form-label">密保问题</label><input type="text" name="security_question" class="form-control" placeholder="如：我的宠物叫什么？"></div>
+                    <div class="col-md-6"><label class="form-label">密码</label><input type="password" name="password" class="form-control" required minlength="6"></div>
+                    <div class="col-md-6"><label class="form-label">确认密码</label><input type="password" name="password_confirm" class="form-control" required></div>
+                    <div class="col-12"><label class="form-label">密保答案</label><input type="text" name="security_answer" class="form-control"></div>
+                </div>
+                {% if form.errors %}<div class="alert alert-danger mt-3 py-2">{{ form.errors|default:'' }}{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+                <button class="btn btn-brand w-100 mt-4" type="submit"><i class="bi bi-person-check"></i> 注册</button>
+            </form>
+            <div class="text-center small mt-3"><a href="{% url 'login' %}">已有账号？去登录 →</a></div>
+        </div>
     </div>
 </div>
 {% endblock %}
-
