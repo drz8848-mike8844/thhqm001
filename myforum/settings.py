@@ -9,7 +9,10 @@ load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = 'django-insecure-replace-me-in-production-123456'
 DEBUG = True
-ALLOWED_HOSTS = ['guang8848.pythonanywhere.com', 'localhost', '127.0.0.1']
+# —— 部署注入点：换机器/换隧道时用环境变量传入，无需改本文件 ——
+# ALLOWED_HOSTS：额外允许访问的 Host（逗号分隔），如 export ALLOWED_HOSTS="tunnel-xxxx-8000.xxx.com,127.0.0.1"
+EXTRA_ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '').split(',') if h.strip()]
+ALLOWED_HOSTS = ['guang8848.pythonanywhere.com', 'localhost', '127.0.0.1'] + EXTRA_ALLOWED_HOSTS
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -23,6 +26,15 @@ INSTALLED_APPS = [
     'accounts',
     'posts',
 ]
+
+# HTTPS 隧道/反代场景：POST 的 Origin 校验必须显式登记完整 scheme://host（逗号分隔）
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+
+# Cloudflare Tunnel / 其它 TLS 反代：代理在边缘终结 HTTPS 后转成 HTTP 发给 Django，
+# 必须信任 X-Forwarded-Proto 才能让 Django 正确识别为 HTTPS（登录/CSRF/邮件链接等依赖它）。
+# 注意：仅当 8000 端口不会被公网直连时再开，否则任何人可伪造该头。
+if os.environ.get('TRUST_X_FORWARDED_PROTO', '').lower() == 'true':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
