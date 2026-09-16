@@ -45,6 +45,9 @@ cd my_thhqm_001
 复制 `.env` 模板（或参考下方说明）并修改：
 
 ```ini
+# ---------- 基础配置（本地监听端口） ----------
+PORT=8000                    # 默认 8000；改端口后隧道要同步指向新端口
+
 # ---------- 隧道/域名配置（重点） ----------
 # 对外访问域名：只写你的 Host（逗号分隔可多写；localhost/127.0.0.1 已默认允许）
 ALLOWED_HOSTS=xbyzkqdh-8000.cn-north-4-bridge.myhuaweicloud.com
@@ -79,7 +82,7 @@ ADMIN_PASS=你的强密码
 ./deploy.sh cloudflare域名 或 DevBridge域名 或 ngrok域名
 ```
 
-`deploy.sh` 自动完成四步：**装依赖（华为云镜像加速）→ 数据库迁移 → 按 .env 创建/更新超级管理员 → 启动服务**，监听 `0.0.0.0:8000`。
+`deploy.sh` 自动完成四步：**装依赖（华为云镜像加速）→ 数据库迁移 → 按 .env 创建/更新超级管理员 → 启动服务**，监听 `0.0.0.0:<PORT>`（默认 8000，`.env` 可改）。
 
 ### 4. 手工部署（不用脚本时）
 
@@ -100,7 +103,7 @@ python3 manage.py runserver 0.0.0.0:8000
 
 ## 🌐 通过隧道对外分享（绕开公网 IP）
 
-服务固定监听 `0.0.0.0:8000`，选一个隧道工具把 8000 暴露出去即可；每次换隧道域名，**只需改 `.env` 里三行 + 重启服务**。
+服务监听 `0.0.0.0:<PORT>`（默认 8000），选一个隧道工具把对应端口暴露出去即可；每次换隧道域名，**只需改 `.env` 里的域名三行 + 重启服务**；若改了 `PORT`，**隧道也要同步指向新端口**（DevBridge/cloudflared/ngrok 均如此）。
 
 ### DevBridge（华为云开发隧道）
 
@@ -147,6 +150,7 @@ ngrok http 8000   # 得到 https://xxxx.ngrok-free.app，同样写入 .env 三�
 | `ALLOWED_HOSTS` | 隧道场景必填 | 允许访问的 Host，逗号分隔（`localhost/127.0.0.1/pythonanywhere` 默认允许） |
 | `CSRF_TRUSTED_ORIGINS` | HTTPS 必填 | 可信 Origin，完整 `https://host`，逗号分隔；否则 POST 表单 403 |
 | `TRUST_X_FORWARDED_PROTO` | TLS 反代必填 | `true`=信任代理 X-Forwarded-Proto 识别 HTTPS（Cloudflare/ngrok 等） |
+| `PORT` | 可选 | 本地监听端口，默认 `8000`；由 `deploy.sh` 读取，隧道需指向该端口 |
 | `ADMIN_USER` | 首次部署建议 | 初始超级管理员用户名（`ensure_admin` 读取） |
 | `ADMIN_PASS` | 首次部署建议 | 初始超级管理员密码 |
 | `ADMIN_EMAIL` | 可选 | 管理员邮箱，默认 `<username>@example.com` |
@@ -174,6 +178,9 @@ HTTPS 隧道下 POST 请求的 Origin 必须登记在 `CSRF_TRUSTED_ORIGINS`，�
 
 **5. 忘了管理员密码？**
 在 `.env` 设置 `ADMIN_USER`/`ADMIN_PASS`/`ADMIN_RESET_PASSWORD=true`，执行 `python3 manage.py ensure_admin`。
+
+**5.5 改了 `.env` 的 `PORT` 后隧道打不开？**
+`deploy.sh` 启动的服务会监听新端口，但隧道还指向旧端口。请重建/更新隧道指向新 `PORT`（DevBridge、cloudflared、ngrok 都要重新 `--url`/config 指向新端口），并确认新端口未占用（`ss -tlnp | grep :<PORT>`）。
 
 **6. 换机器部署后数据是空的？**
 SQLite 开发库 `db.sqlite3` 不随仓库提交（已 gitignore）。要带演示数据，把原机器 `db.sqlite3` 一并拷到新机器项目根目录即可（仅限开发场景）。
