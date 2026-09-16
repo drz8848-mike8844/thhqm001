@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}通知 · 东方幻绮梦{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0"><i class="bi bi-bell text-primary"></i> 我的通知</h3>
+    <button class="btn btn-sm btn-outline-primary" id="readAllBtn"><i class="bi bi-check2-all"></i> 全部已读</button>
+</div>
+<div class="card">
+    <div class="list-group list-group-flush">
+        {% for n in page_obj %}
+        <div class="list-group-item d-flex gap-3 align-items-center {% if not n.is_read %}fw-semibold{% endif %}">
+            {% if n.actor %}
+            <span class="avatar avatar-sm avatar-grad">{{ n.actor.profile.get_avatar_initial }}</span>
+            {% else %}
+            <span class="avatar avatar-sm bg-secondary"><i class="bi bi-info-circle"></i></span>
+            {% endif %}
+            <div class="flex-grow-1">
+                <span>{{ n.verb }}</span>
+                <div class="text-muted small">{{ n.created_at|date:"Y-m-d H:i" }}</div>
+            </div>
+            {% if n.url %}<a href="{{ n.url }}" class="btn btn-sm btn-outline-primary">查看</a>{% endif %}
+            {% if not n.is_read %}<span class="badge bg-primary rounded-pill">新</span>{% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state"><i class="bi bi-bell-slash display-4"></i><p class="mt-3">暂无通知</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="mt-3"><ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a></li>{% endif %}
+    <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function(){
+    $('#readAllBtn').click(function(){
+        $.post("/accounts/notifications/read-all/", {csrfmiddlewaretoken:'{{ csrf_token }}'}, function(){ location.reload(); });
+    });
+});
+</script>
+{% endblock %}

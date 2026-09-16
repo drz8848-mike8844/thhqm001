@@ -1,113 +1,87 @@
 {% extends 'base.html' %}
+{% block title %}个人中心 · 东方幻绮梦{% endblock %}
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-8">
-            <h2>个人中心</h2>
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="me-3">
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
-                                 style="width: 80px; height: 80px; font-size: 32px;">
-                                {{ user.profile.nickname|first|upper|default:user.username|first|upper }}
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="mb-1">{{ user.profile.nickname|default:user.username }}</h4>
-                            <p class="text-muted mb-0">@{{ user.username }}</p>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p class="mb-2"><strong>用户名:</strong> {{ user.username }}</p>
-                            <p class="mb-2"><strong>邮箱:</strong> 
-                                {{ user.email }}
-                                {% if user.profile.email_verified %}
-                                    <span class="badge bg-success">已验证</span>
-                                {% else %}
-                                    <span class="badge bg-warning">未验证</span>
-                                    <a href="{% url 'resend_verification_email' %}" class="btn btn-sm btn-outline-primary ms-2">发送验证邮件</a>
-                                {% endif %}
-                            </p>
-                            <p class="mb-2"><strong>注册时间:</strong> {{ user.date_joined|date:"Y-m-d H:i" }}</p>
-                            <p class="mb-2"><strong>用户角色:</strong> 
-                                <span class="badge 
-                                    {% if user.profile.role == 'owner' %}bg-danger
-                                    {% elif user.profile.role == 'mod' %}bg-warning
-                                    {% else %}bg-primary{% endif %}">
-                                    {{ user.profile.get_role_display }}
-                                </span>
-                            </p>
-                            {% if user.profile.is_muted %}
-                                <p class="mb-2"><strong>状态:</strong> 
-                                    <span class="badge bg-danger">已被禁言</span>
-                                </p>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <h5>统计信息</h5>
-                            <div class="d-flex justify-content-around">
-                                <div class="text-center">
-                                    <h3>{{ user.profile.posts_count }}</h3>
-                                    <p class="text-muted mb-0">发帖数</p>
-                                </div>
-                                <div class="text-center">
-                                    <h3>{{ user.profile.likes_received }}</h3>
-                                    <p class="text-muted mb-0">获赞数</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'post_create' %}" class="btn btn-primary">发布新帖</a>
-                        <a href="{% url 'profile_edit' %}" class="btn btn-outline-primary">编辑资料</a>
-                        <a href="{% url 'change_password' %}" class="btn btn-outline-secondary">修改密码</a>
+{% with li=user.profile.get_level_info %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4 mb-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                {% if user.profile.avatar %}<img src="{{ user.profile.avatar.url }}" class="avatar avatar-lg">{% else %}<span class="avatar avatar-lg avatar-grad">{{ user.profile.get_avatar_initial }}</span>{% endif %}
+                <div class="flex-grow-1">
+                    <h3 class="mb-1">{{ user.profile.get_display_name }}</h3>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="text-muted">@{{ user.username }}</span>
+                        <span class="level-badge bg-{{ li.color }}">Lv{{ li.level }} {{ li.name }}</span>
+                        <span class="badge {% if user.profile.role == 'owner' %}bg-danger{% elif user.profile.role == 'mod' %}bg-warning{% else %}bg-primary{% endif %}">{{ user.profile.get_role_display }}</span>
+                        {% if user.profile.is_muted %}<span class="badge bg-danger">已禁言</span>{% endif %}
                     </div>
                 </div>
+                <div class="text-end">
+                    <a href="{% url 'profile_edit' %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> 编辑</a>
+                </div>
             </div>
-            
-            {% if user_posts %}
-            <h4>最近发布的帖子</h4>
-            <div class="list-group">
-                {% for post in user_posts %}
-                <a href="{% url 'post_list' %}" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{ post.title }}</h5>
-                        <small>{{ post.created_at|date:"Y-m-d H:i" }}</small>
-                    </div>
-                    <p class="mb-1">{{ post.content|truncatewords:20 }}</p>
-                    <small>
-                        ❤️ {{ post.likes_count }} 点赞 | 
-                        ⭐ {{ post.favorites_count }} 收藏 | 
-                        🔄 {{ post.shares_count }} 转发
-                    </small>
-                </a>
-                {% endfor %}
+
+            {% if user.profile.bio %}<p class="text-muted mb-3"><i class="bi bi-chat-quote"></i> {{ user.profile.bio }}</p>{% endif %}
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span class="fw-semibold">Lv{{ li.level }} {{ li.name }}</span>
+                    <span class="text-muted">{% if li.next_exp %}{{ li.current_exp }}/{{ li.next_exp }} 经验{% else %}已达最高级{% endif %}</span>
+                </div>
+                <div class="progress" style="height:8px;"><div class="progress-bar" role="progressbar" style="width:{{ li.progress }}%;background:var(--brand-grad);"></div></div>
             </div>
-            {% endif %}
+
+            <div class="row text-center g-2">
+                <div class="col"><h4 class="mb-0">{{ user.profile.posts_count }}</h4><small class="text-muted">发帖</small></div>
+                <div class="col"><h4 class="mb-0">{{ user.profile.likes_received }}</h4><small class="text-muted">获赞</small></div>
+                <div class="col"><h4 class="mb-0">{{ following_count }}</h4><small class="text-muted">关注</small></div>
+                <div class="col"><h4 class="mb-0">{{ followers_count }}</h4><small class="text-muted">粉丝</small></div>
+                <div class="col"><h4 class="mb-0">{{ user.profile.experience }}</h4><small class="text-muted">经验</small></div>
+            </div>
+
+            <hr>
+            <div class="row small">
+                <div class="col-md-6">
+                    <p class="mb-1"><i class="bi bi-envelope"></i> {{ user.email }}
+                        {% if user.profile.email_verified %}<span class="badge bg-success">已验证</span>{% else %}<span class="badge bg-warning">未验证</span> <a href="{% url 'resend_verification_email' %}" class="link-primary">重发</a>{% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6"><p class="mb-1"><i class="bi bi-calendar"></i> 注册于 {{ user.date_joined|date:"Y-m-d" }}</p></div>
+            </div>
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+                <a href="{% url 'post_create' %}" class="btn btn-brand btn-sm"><i class="bi bi-plus-lg"></i> 发布新帖</a>
+                <a href="{% url 'change_password' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-key"></i> 修改密码</a>
+                <a href="{% url 'following_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-people"></i> 我的关注</a>
+                <a href="{% url 'followers_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-people"></i> 我的粉丝</a>
+            </div>
         </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">快捷操作</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'favorites' %}" class="btn btn-outline-primary">我的收藏</a>
-                        <a href="{% url 'post_list' %}" class="btn btn-outline-success">浏览帖子</a>
-                        <a href="{% url 'password_reset_request' %}" class="btn btn-outline-warning">忘记密码</a>
-                    </div>
-                </div>
+
+        <h5 class="mb-3"><i class="bi bi-clock-history text-primary"></i> 最近发布的帖子</h5>
+        {% for post in user_posts %}
+        <div class="card mb-2"><div class="card-body">
+            <a href="{% url 'post_detail' post.id %}" class="text-decoration-none fw-semibold">{{ post.title }}</a>
+            <div class="text-muted small">{{ post.created_at|date:"Y-m-d H:i" }} · ❤️{{ post.likes_count }} 💬{{ post.comments_count }} 👁{{ post.views_count }}</div>
+        </div></div>
+        {% empty %}
+        <div class="card"><div class="empty-state"><p>还没有发布过帖子</p></div></div>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card p-4 mb-4">
+            <h5 class="mb-3"><i class="bi bi-lightning-charge text-warning"></i> 快捷操作</h5>
+            <div class="d-grid gap-2">
+                <a href="{% url 'favorites' %}" class="btn btn-outline-primary"><i class="bi bi-bookmark-star"></i> 我的收藏</a>
+                <a href="{% url 'inbox' %}" class="btn btn-outline-primary"><i class="bi bi-envelope"></i> 我的私信</a>
+                <a href="{% url 'notifications' %}" class="btn btn-outline-primary"><i class="bi bi-bell"></i> 我的通知</a>
+                <a href="{% url 'post_list' %}" class="btn btn-outline-success"><i class="bi bi-chat-square-text"></i> 浏览帖子</a>
             </div>
+        </div>
+        <div class="card p-4">
+            <h5 class="mb-3"><i class="bi bi-info-circle text-primary"></i> 等级说明</h5>
+            <p class="small text-muted mb-0">通过发帖、获赞、评论、被关注可获得经验值，自动升级。等级越高，徽章颜色越炫酷！</p>
         </div>
     </div>
 </div>
+{% endwith %}
 {% endblock %}

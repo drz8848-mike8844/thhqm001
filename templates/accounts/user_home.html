@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}{{ target.profile.get_display_name }} 的主页 · 东方幻绮梦{% endblock %}
+{% block content %}
+{% with li=target.profile.get_level_info %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4 mb-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                {% if target.profile.avatar %}<img src="{{ target.profile.avatar.url }}" class="avatar avatar-lg">{% else %}<span class="avatar avatar-lg avatar-grad">{{ target.profile.get_avatar_initial }}</span>{% endif %}
+                <div class="flex-grow-1">
+                    <h3 class="mb-1">{{ target.profile.get_display_name }}</h3>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted">@{{ target.username }}</span>
+                        <span class="level-badge bg-{{ li.color }}">Lv{{ li.level }} {{ li.name }}</span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm {% if is_following %}btn-outline-secondary{% else %}btn-outline-primary{% endif %} follow-btn" data-user="{{ target.username }}"><i class="bi bi-person-plus"></i> <span>{% if is_following %}已关注{% else %}关注{% endif %}</span></button>
+                    <a href="{% url 'start_conversation' target.username %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-envelope"></i> 私信</a>
+                </div>
+            </div>
+            {% if target.profile.bio %}<p class="text-muted mb-3"><i class="bi bi-chat-quote"></i> {{ target.profile.bio }}</p>{% endif %}
+            <div class="row text-center g-2">
+                <div class="col"><h4 class="mb-0">{{ target.profile.posts_count }}</h4><small class="text-muted">发帖</small></div>
+                <div class="col"><h4 class="mb-0">{{ target.profile.likes_received }}</h4><small class="text-muted">获赞</small></div>
+                <div class="col"><h4 class="mb-0">{{ following_count }}</h4><small class="text-muted">关注</small></div>
+                <div class="col"><h4 class="mb-0">{{ followers_count }}</h4><small class="text-muted">粉丝</small></div>
+            </div>
+        </div>
+
+        <h5 class="mb-3"><i class="bi bi-file-earmark-text text-primary"></i> TA 的帖子</h5>
+        {% for post in user_posts %}
+        <div class="card mb-2"><div class="card-body">
+            <a href="{% url 'post_detail' post.id %}" class="text-decoration-none fw-semibold">{{ post.title }}</a>
+            <div class="text-muted small">{{ post.created_at|date:"Y-m-d H:i" }} · ❤️{{ post.likes_count }} 💬{{ post.comments_count }} 👁{{ post.views_count }}</div>
+            <div class="rich-content text-muted mt-1" data-md="{{ post.content|escapejs }}" style="max-height:4rem;overflow:hidden;">{{ post.content|truncatewords:25 }}</div>
+        </div></div>
+        {% empty %}
+        <div class="card"><div class="empty-state"><p>TA 还没有发布过帖子</p></div></div>
+        {% endfor %}
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-4">
+            <h5 class="mb-3"><i class="bi bi-info-circle text-primary"></i> 用户信息</h5>
+            <ul class="list-unstyled small mb-0">
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">用户名</span>@{{ target.username }}</li>
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">等级</span>Lv{{ li.level }} {{ li.name }}</li>
+                <li class="d-flex justify-content-between py-1"><span class="text-muted">注册于</span>{{ target.date_joined|date:"Y-m-d" }}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function(){
+    $('.follow-btn').click(function(){
+        var btn=$(this), u=btn.data('user'), following=btn.find('span').text().trim()==='已关注';
+        $.post(following?"/accounts/unfollow/"+u+"/":"/accounts/follow/"+u+"/", {csrfmiddlewaretoken:'{{ csrf_token }}'}, function(d){
+            btn.find('span').text(d.following?'已关注':'关注');
+            btn.toggleClass('btn-outline-primary', !d.following).toggleClass('btn-outline-secondary', d.following);
+        });
+    });
+});
+</script>
+{% endblock %}

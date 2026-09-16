@@ -60,6 +60,11 @@ class ProfileEditForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
+    bio = forms.CharField(
+        max_length=300, label="个人简介", required=False,
+        widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': '介绍一下自己吧~'})
+    )
+    avatar = forms.ImageField(label="头像", required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
     security_question = forms.CharField(
         max_length=200, 
         label="密保问题",
@@ -111,3 +116,11 @@ class PasswordResetConfirmForm(forms.Form):
         if cd['password'] != cd['password_confirm']:
             raise forms.ValidationError("两次密码输入不一致")
         return cd['password_confirm']
+
+
+class MessageForm(forms.Form):
+    """私信发送表单"""
+    content = forms.CharField(
+        label="消息内容",
+        widget=forms.Textarea(attrs={'rows': 2, 'class': 'form-control', 'placeholder': '输入消息...'}),
+    )
