@@ -1,5 +1,7 @@
 from django import forms
+from django.utils.html import strip_tags
 from .models import Post, Comment, Report
+from .sanitize import clean_html
 
 
 class PostForm(forms.ModelForm):
@@ -11,12 +13,17 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ['title', 'content', 'image', 'link']
+        fields = ['title', 'content']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'content': forms.Textarea(attrs={'rows': 8, 'class': 'form-control'}),
-            'link': forms.URLInput(attrs={'class': 'form-control'}),
+            'content': forms.HiddenInput(),
         }
+
+    def clean_content(self):
+        html = clean_html(self.cleaned_data.get('content', ''))
+        if not strip_tags(html).strip():
+            raise forms.ValidationError("正文不能为空")
+        return html
 
     def save(self, commit=True):
         post = super().save(commit=False)
@@ -38,10 +45,13 @@ class PostForm(forms.ModelForm):
 
 
 class CommentForm(forms.Form):
-    content = forms.CharField(
-        label="评论内容",
-        widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': '写下你的评论... (支持 @提及用户)'}),
-    )
+    content = forms.CharField(widget=forms.HiddenInput())
+
+    def clean_content(self):
+        html = clean_html(self.cleaned_data.get('content', ''))
+        if not strip_tags(html).strip():
+            raise forms.ValidationError("评论不能为空")
+        return html
 
 
 class ReportForm(forms.ModelForm):

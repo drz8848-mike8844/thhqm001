@@ -43,8 +43,7 @@
                     <span class="level-badge bg-{{ post.author.profile.get_level_info.color }}">{{ post.author.profile.get_level_info.name }}</span>
                     · {{ post.created_at|date:"Y-m-d H:i" }}
                 </div>
-                <div class="rich-content text-muted mb-2" data-md="{{ post.content|escapejs }}" style="max-height:6rem;overflow:hidden;">{{ post.content|linebreaks|truncatewords:40 }}</div>
-                {% if post.image %}<img src="{{ post.image.url }}" class="img-fluid rounded mb-2" style="max-height:240px;object-fit:cover;">{% endif %}
+                <div class="text-muted mb-2" style="max-height:6rem;overflow:hidden;">{{ post.content|striptags|truncatechars:120 }}</div>
                 {% if post.tags.all %}
                 <div class="d-flex flex-wrap gap-1 mb-2">{% for tag in post.tags.all %}<a href="{% url 'posts_by_tag' tag.name %}" class="tag-pill">{{ tag.name }}</a>{% endfor %}</div>
                 {% endif %}
@@ -53,7 +52,6 @@
                     <a href="{% url 'post_detail' post.id %}#comments" class="text-muted text-decoration-none"><i class="bi bi-chat-dots"></i> {{ post.comments_count }}</a>
                     <span class="action-btn fav-btn {% if post.id in user_favs %}text-warning{% endif %}" data-id="{{ post.id }}"><i class="bi bi-bookmark{% if post.id in user_favs %}-fill{% endif %}"></i> <span class="fav-count-{{ post.id }}">{{ post.favorites_count }}</span></span>
                     <span><i class="bi bi-eye"></i> {{ post.views_count }}</span>
-                    <span><i class="bi bi-share"></i> {{ post.shares_count }}</span>
                 </div>
             </div>
         </div>

@@ -1,6 +1,8 @@
 # posts/admin.py
 from django.contrib import admin
+from django.utils.html import strip_tags
 from .models import Post, Tag, PostImage, Comment, CommentLike, Report
+from .sanitize import clean_html
 
 
 @admin.register(Post)
@@ -11,6 +13,10 @@ class PostAdmin(admin.ModelAdmin):
     search_fields = ('title', 'content')
     date_hierarchy = 'created_at'
     filter_horizontal = ('tags',)
+
+    def save_model(self, request, obj, form, change):
+        obj.content = clean_html(obj.content)
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Tag)
@@ -29,8 +35,12 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ('author', 'post', 'content_preview', 'created_at', 'likes_count')
     search_fields = ('content', 'author__username')
 
+    def save_model(self, request, obj, form, change):
+        obj.content = clean_html(obj.content)
+        super().save_model(request, obj, form, change)
+
     def content_preview(self, obj):
-        return obj.content[:30]
+        return strip_tags(obj.content)[:30]
     content_preview.short_description = '内容'
 
 

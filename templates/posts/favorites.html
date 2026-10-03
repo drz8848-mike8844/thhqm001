@@ -9,7 +9,7 @@
             <div class="card-body">
                 <a href="{% url 'post_detail' post.id %}" class="h5 text-decoration-none fw-semibold">{{ post.title }}</a>
                 <div class="text-muted small mt-1">{{ post.author.profile.get_display_name }} · {{ post.created_at|date:"Y-m-d H:i" }}</div>
-                <div class="rich-content text-muted mt-2" data-md="{{ post.content|escapejs }}" style="max-height:5rem;overflow:hidden;">{{ post.content|truncatewords:30 }}</div>
+                <div class="text-muted mt-2" style="max-height:5rem;overflow:hidden;">{{ post.content|striptags|truncatechars:90 }}</div>
                 <div class="text-muted small mt-2">❤️ {{ post.likes_count }} · 💬 {{ post.comments_count }} · 👁 {{ post.views_count }}</div>
             </div>
         </div>

@@ -1,0 +1,46 @@
+/* 富文本编辑器容器 + 渲染端 Quill 输出样式 */
+.rich-editor { background: #fff; border-radius: .6rem; }
+.rich-editor .ql-toolbar { border-top-left-radius: .6rem; border-top-right-radius: .6rem; }
+.rich-editor .ql-container {
+    border-bottom-left-radius: .6rem;
+    border-bottom-right-radius: .6rem;
+    font-size: 1rem;
+    font-family: inherit;
+}
+.rich-editor .ql-editor { min-height: 240px; line-height: 1.75; }
+.rich-editor .ql-editor img { max-width: 100%; border-radius: .6rem; }
+.rich-editor.rich-editor-sm .ql-editor { min-height: 96px; }
+
+/* 渲染端：兼容 Quill 的 ql-* 类（对齐 / 缩进 / 字号） */
+.rich-content .ql-align-center { text-align: center; }
+.rich-content .ql-align-right { text-align: right; }
+.rich-content .ql-align-justify { text-align: justify; }
+.rich-content .ql-indent-1 { padding-left: 1.5em; }
+.rich-content .ql-indent-2 { padding-left: 3em; }
+.rich-content .ql-indent-3 { padding-left: 4.5em; }
+.rich-content .ql-indent-4 { padding-left: 6em; }
+.rich-content .ql-indent-5 { padding-left: 7.5em; }
+.rich-content .ql-indent-6 { padding-left: 9em; }
+.rich-content .ql-indent-7 { padding-left: 10.5em; }
+.rich-content .ql-indent-8 { padding-left: 12em; }
+.rich-content .ql-size-small { font-size: .85em; }
+.rich-content .ql-size-large { font-size: 1.5em; }
+.rich-content .ql-size-huge { font-size: 2.5em; }
+.rich-content pre.ql-syntax {
+    background: #f6f8fa;
+    padding: .8rem;
+    border-radius: .5rem;
+    overflow: auto;
+}
+
+/* 深色模式 */
+[data-bs-theme="dark"] .rich-editor { background: #23262e; }
+[data-bs-theme="dark"] .rich-editor .ql-toolbar,
+[data-bs-theme="dark"] .rich-editor .ql-container { border-color: #3a3f4b; }
+[data-bs-theme="dark"] .rich-editor .ql-editor { color: #e3e6ea; }
+[data-bs-theme="dark"] .rich-editor .ql-editor.ql-blank::before { color: #8b93a1; }
+[data-bs-theme="dark"] .rich-editor .ql-snow .ql-stroke { stroke: #c9d1d9; }
+[data-bs-theme="dark"] .rich-editor .ql-snow .ql-fill { fill: #c9d1d9; }
+[data-bs-theme="dark"] .rich-editor .ql-snow .ql-picker { color: #c9d1d9; }
+[data-bs-theme="dark"] .rich-editor .ql-snow .ql-picker-options { background: #23262e; border-color: #3a3f4b; }
+[data-bs-theme="dark"] .rich-content pre.ql-syntax { background: #0d1117; }

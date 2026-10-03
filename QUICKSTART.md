@@ -27,8 +27,8 @@ pip install Django==4.2
 在项目根目录创建 `.env` 文件（已被 `.gitignore` 忽略，不会提交到 Git）：
 
 ```ini
-EMAIL_HOST_USER=你的163邮箱
-EMAIL_HOST_PASSWORD=你的授权码
+EMAIL_HOST_USER=xxx@163.com
+EMAIL_HOST_PASSWORD=
 ```
 
 `myforum/settings.py` 会通过 `load_dotenv()` 自动读取这两个变量，无需在代码中写死。

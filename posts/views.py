@@ -1,12 +1,21 @@
 # posts/views.py
+import mimetypes
+import uuid
+from datetime import date
+
+import mammoth
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Q, Count, F
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.core.files.base import File
+from django.core.files.storage import default_storage
+from PIL import Image
 from .models import Post, Like, Favorite, Comment, CommentLike, Tag, Report
 from .forms import PostForm, CommentForm, ReportForm
+from .sanitize import clean_html
 from accounts.decorators import is_staff_or_owner, not_muted_required, role_required
 from accounts.utils import (update_user_statistics, create_notification,
                             add_experience, notify_mentions)
@@ -123,7 +132,7 @@ def post_detail(request, pk):
 @not_muted_required
 def post_create(request):
     if request.method == 'POST':
-        form = PostForm(request.POST, request.FILES)
+        form = PostForm(request.POST)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
@@ -136,7 +145,102 @@ def post_create(request):
             return redirect('post_detail', pk=post.id)
     else:
         form = PostForm()
-    return render(request, 'posts/form.html', {'form': form})
+    return render(request, 'posts/form.html', {'form': form, 'is_edit': False})
+
+
+@login_required
+@not_muted_required
+def post_edit(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    if request.user != post.author and not is_staff_or_owner(request.user):
+        return HttpResponseForbidden("你没有权限编辑此帖子")
+
+    if request.method == 'POST':
+        form = PostForm(request.POST, instance=post)
+        if form.is_valid():
+            post = form.save()
+            messages.success(request, "修改已保存！")
+            return redirect('post_detail', pk=post.id)
+    else:
+        form = PostForm(instance=post, initial={
+            'tags_input': ', '.join(post.tags.values_list('name', flat=True)),
+        })
+    return render(request, 'posts/form.html', {'form': form, 'is_edit': True, 'post': post})
+
+
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+ALLOWED_IMAGE_FORMATS = {'JPEG': 'jpg', 'PNG': 'png', 'GIF': 'gif', 'WEBP': 'webp'}
+
+
+@login_required
+@not_muted_required
+def upload_editor_image(request):
+    """富文本编辑器内联图片上传：接收粘贴/拖拽/选择的图片，返回可插入的 URL。"""
+    if request.method != 'POST':
+        return JsonResponse({'error': '仅支持 POST'}, status=405)
+
+    f = request.FILES.get('image')
+    if not f:
+        return JsonResponse({'error': '未收到图片'}, status=400)
+    if f.size > MAX_IMAGE_BYTES:
+        return JsonResponse({'error': '图片不能超过 5MB'}, status=400)
+
+    try:
+        img = Image.open(f)
+        img.verify()                       # 校验是真实图片
+        fmt = (img.format or '').upper()
+        f.seek(0)
+        Image.open(f).load()               # verify() 后需重新打开才能再读
+    except Exception:
+        return JsonResponse({'error': '无效的图片文件'}, status=400)
+
+    ext = ALLOWED_IMAGE_FORMATS.get(fmt)
+    if not ext:
+        return JsonResponse({'error': '仅支持 JPG/PNG/GIF/WEBP'}, status=400)
+
+    # 随机文件名 + 由校验格式推导扩展名，忽略原始文件名以杜绝路径穿越
+    name = f"posts/editor/{date.today():%Y/%m/%d}/{uuid.uuid4().hex}.{ext}"
+    saved = default_storage.save(name, f)
+    return JsonResponse({'url': default_storage.url(saved)})
+
+
+MAX_DOCX_BYTES = 10 * 1024 * 1024
+
+
+def _save_docx_image(image):
+    """mammoth 图片回调：把 .docx 内嵌图片存进 MEDIA 并返回站内 URL。"""
+    ext = mimetypes.guess_extension(image.content_type or 'image/png') or '.png'
+    if ext == '.jpe':
+        ext = '.jpg'
+    name = f"posts/editor/{date.today():%Y/%m/%d}/{uuid.uuid4().hex}{ext}"
+    with image.open() as f:
+        saved = default_storage.save(name, File(f))
+    return {'src': default_storage.url(saved)}
+
+
+@login_required
+@not_muted_required
+def import_docx(request):
+    """把上传的 .docx 转成 HTML 返回，供编辑器插入正文。"""
+    if request.method != 'POST':
+        return JsonResponse({'error': '仅支持 POST'}, status=405)
+
+    f = request.FILES.get('document')
+    if not f:
+        return JsonResponse({'error': '未收到文件'}, status=400)
+    if f.size > MAX_DOCX_BYTES:
+        return JsonResponse({'error': '文件不能超过 10MB'}, status=400)
+    if not f.name.lower().endswith('.docx'):
+        return JsonResponse({'error': '仅支持 .docx 文件'}, status=400)
+
+    try:
+        result = mammoth.convert_to_html(
+            f, convert_image=mammoth.images.img_element(_save_docx_image)
+        )
+    except Exception:
+        return JsonResponse({'error': '无法解析该 .docx 文件'}, status=400)
+
+    return JsonResponse({'html': clean_html(result.value)})
 
 
 @login_required
@@ -198,14 +302,6 @@ def favorites_list(request):
     return render(request, 'posts/favorites.html', {'posts': posts})
 
 
-def share_post(request, pk):
-    post = get_object_or_404(Post, pk=pk)
-    post.shares_count += 1
-    post.save()
-    messages.success(request, "已转发（链接已复制）！")
-    return redirect('post_detail', pk=post.id)
-
-
 @login_required
 @not_muted_required
 def add_comment(request, pk):
@@ -243,6 +339,8 @@ def add_comment(request, pk):
             notify_mentions(comment.content, request.user, detail_url)
 
             messages.success(request, "评论成功！")
+        else:
+            messages.error(request, "评论内容不能为空。")
     return redirect('post_detail', pk=post.id)
 
 

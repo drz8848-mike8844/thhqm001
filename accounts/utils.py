@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 import logging
 
@@ -101,8 +102,8 @@ def add_experience(user, points):
 
 
 def parse_mentions(text):
-    """从文本中解析 @用户名，返回存在的 User 查询集"""
-    usernames = set(MENTION_RE.findall(text or ''))
+    """从文本中解析 @用户名，返回存在的 User 查询集（正文可能是 HTML，先剥离标签）"""
+    usernames = set(MENTION_RE.findall(strip_tags(text or '')))
     if not usernames:
         return []
     return list(User.objects.filter(username__in=usernames))

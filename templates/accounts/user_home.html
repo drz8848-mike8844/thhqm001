@@ -33,7 +33,7 @@
         <div class="card mb-2"><div class="card-body">
             <a href="{% url 'post_detail' post.id %}" class="text-decoration-none fw-semibold">{{ post.title }}</a>
             <div class="text-muted small">{{ post.created_at|date:"Y-m-d H:i" }} · ❤️{{ post.likes_count }} 💬{{ post.comments_count }} 👁{{ post.views_count }}</div>
-            <div class="rich-content text-muted mt-1" data-md="{{ post.content|escapejs }}" style="max-height:4rem;overflow:hidden;">{{ post.content|truncatewords:25 }}</div>
+            <div class="text-muted mt-1" style="max-height:4rem;overflow:hidden;">{{ post.content|striptags|truncatechars:80 }}</div>
         </div></div>
         {% empty %}
         <div class="card"><div class="empty-state"><p>TA 还没有发布过帖子</p></div></div>
