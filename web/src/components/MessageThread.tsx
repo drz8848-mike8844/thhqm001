@@ -115,8 +115,8 @@ export function MessageThread({
             </li>
           );
         })}
-        <li ref={bottomRef} aria-hidden="true" />
       </ol>
+      <div ref={bottomRef} aria-hidden="true" />
 
       <form className="thread__composer" onSubmit={send}>
         <label className="visually-hidden" htmlFor="message-input">

@@ -1326,6 +1326,357 @@
     & .stat-list__label { color: var(--ink-muted); font-size: var(--step--1); }
     & .stat-list__value { font-variant-numeric: tabular-nums; font-weight: 650; }
   }
+
+  /* ---------------- 通知 ---------------- */
+  .notif-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .notif {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+
+    &[data-unread] {
+      border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+      background: color-mix(in oklab, var(--accent-soft) 40%, var(--surface));
+    }
+  }
+
+  .notif__link {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    min-inline-size: 0;
+
+    & time { margin-inline-start: auto; white-space: nowrap; font-size: 0.78rem; }
+  }
+
+  .notif-list__text {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--step--1);
+
+    & b { font-weight: 650; }
+  }
+
+  .notif__type {
+    padding-inline-end: 1rem;
+    color: var(--ink-muted);
+    font-size: 0.85rem;
+  }
+
+  /* ---------------- 私信 ---------------- */
+  .messages-page,
+  .conversation-page,
+  .settings-page {
+    inline-size: 100%;
+  }
+
+  .convo-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .convo {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    transition: border-color 150ms;
+
+    &:hover { border-color: var(--line-strong); }
+    &[data-unread] {
+      border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+      background: color-mix(in oklab, var(--accent-soft) 35%, var(--surface));
+    }
+  }
+
+  .convo__link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+  }
+
+  .convo__body {
+    display: grid;
+    gap: 0.15rem;
+    min-inline-size: 0;
+    flex: 1;
+  }
+
+  .convo__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: var(--step-0);
+
+    & time { font-size: 0.78rem; color: var(--ink-muted); white-space: nowrap; }
+  }
+
+  .convo__preview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink-muted);
+    font-size: var(--step--1);
+  }
+
+  .convo__dot {
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+
+  .thread {
+    display: grid;
+    gap: 1rem;
+    max-inline-size: 46rem;
+  }
+
+  .thread__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+    min-block-size: 40vh;
+    align-content: start;
+  }
+
+  .bubble {
+    max-inline-size: min(78%, 34rem);
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: var(--surface-solid);
+    justify-self: start;
+    border-start-start-radius: 0.3rem;
+
+    & p {
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      font-size: var(--step-0);
+    }
+
+    & time {
+      display: block;
+      margin-block-start: 0.2rem;
+      font-size: 0.7rem;
+      color: var(--ink-muted);
+    }
+
+    &[data-mine] {
+      justify-self: end;
+      border-start-start-radius: var(--radius-md);
+      border-start-end-radius: 0.3rem;
+      background: var(--accent-soft);
+      border-color: transparent;
+      color: light-dark(var(--ink), oklch(0.93 0.01 178));
+    }
+  }
+
+  .thread__composer {
+    display: grid;
+    gap: 0.5rem;
+    position: sticky;
+    inset-block-end: 1rem;
+
+    & textarea { min-block-size: 4.5rem; resize: none; }
+  }
+
+  .thread__composer-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: var(--step--1);
+  }
+
+  /* ---------------- 设置 ---------------- */
+  .settings {
+    display: grid;
+    gap: 1.25rem;
+    max-inline-size: 42rem;
+  }
+
+  .settings__avatar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .settings__avatar-actions {
+    display: grid;
+    gap: 0.35rem;
+    font-size: var(--step--1);
+
+    & label { cursor: pointer; justify-self: start; }
+  }
+
+  /* ---------------- 弹窗（举报） ---------------- */
+  .dialog {
+    inline-size: min(92vw, 26rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface-solid);
+    color: var(--ink);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-md);
+    margin: auto;
+
+    &::backdrop {
+      background: oklch(0.2 0.02 268 / 0.45);
+      backdrop-filter: blur(3px);
+    }
+  }
+
+  .dialog__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-end: 1rem;
+
+    & h2 { font-family: var(--font-sans); font-size: var(--step-1); }
+  }
+
+  .dialog__close {
+    display: grid;
+    place-items: center;
+    inline-size: 2rem;
+    block-size: 2rem;
+    border-radius: 50%;
+    color: var(--ink-muted);
+
+    &:hover { background: var(--veil); color: var(--ink); }
+  }
+
+  .dialog__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-block-start: 0.25rem;
+  }
+
+  .radio-list {
+    display: grid;
+    gap: 0.45rem;
+    padding-block-start: 0.35rem;
+  }
+
+  .radio {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--step-0);
+    cursor: pointer;
+  }
+
+  /* ---------------- 详情页补充 ---------------- */
+  .post-detail__foot {
+    display: flex;
+    justify-content: flex-end;
+    padding-block-start: 0.35rem;
+  }
+
+  /* ---------------- 管理后台 ---------------- */
+  .admin-page {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    inline-size: 100%;
+  }
+
+  .admin-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .admin-stat {
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+
+    & .admin-stat__value {
+      font-size: var(--step-2);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    & .admin-stat__label { color: var(--ink-muted); font-size: var(--step--1); }
+  }
+
+  .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+
+    & .button { min-block-size: 2.25rem; padding-inline: 0.85rem; }
+  }
+
+  .admin-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .admin-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    font-size: var(--step--1);
+
+    & .admin-row__main {
+      display: grid;
+      gap: 0.15rem;
+      min-inline-size: 0;
+      flex: 1;
+    }
+    & .admin-row__title {
+      font-weight: 650;
+      font-size: var(--step-0);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    & .admin-row__meta { color: var(--ink-muted); }
+  }
+
+  .role-select {
+    min-block-size: 2.25rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-solid);
+    color: var(--ink);
+    font-size: var(--step--1);
+  }
 }
 
 /* ---------------- utilities ---------------- */
