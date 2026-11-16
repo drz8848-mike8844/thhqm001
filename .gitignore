@@ -19,3 +19,8 @@ staticfiles/
 # IDE
 .vscode/
 .idea/
+
+# 本地临时 / 部署中间产物
+tmp-*.py
+*.orig
+.web-design-skill/
