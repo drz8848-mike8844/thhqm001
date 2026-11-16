@@ -1,0 +1,10 @@
+{
+  "name": "dongfang-huanqimeng",
+  "compatibility_date": "2025-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist",
+    "binding": "ASSETS"
+  },
+  "main": "worker.ts"
+}

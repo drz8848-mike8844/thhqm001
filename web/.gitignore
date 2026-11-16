@@ -31,3 +31,7 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# build artifacts
+dist/
+.next/standalone/
